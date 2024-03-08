@@ -1,38 +1,55 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../database/dbConnection';
+import { DataTypes, Model } from "sequelize";
+import sequelize from "../database/dbConnection";
 
-const FolderModel = sequelize.define(
-    'folder',
+interface FolderAtributes {
+    id: string;
+    name: string;
+    user_id: string;
+    parent_id: string | null;
+    created_date: Date;
+    status: boolean;
+}
+
+class FolderModel extends Model<FolderAtributes> implements FolderAtributes {
+    id!: string;
+    name!: string;
+    user_id!: string;
+    parent_id!: string | null;
+    created_date!: Date;
+    status!: boolean;
+}
+
+FolderModel.init(
     {
         id: {
             type: DataTypes.UUID,
             allowNull: false,
-            primaryKey: true
+            primaryKey: true,
         },
         name: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: false,
         },
         user_id: {
             type: DataTypes.UUID,
-            allowNull: false
+            allowNull: false,
         },
         parent_id: {
             type: DataTypes.UUID,
-            allowNull: true
+            allowNull: true,
         },
         created_date: {
             type: DataTypes.DATE,
-            allowNull: false
+            allowNull: false,
         },
         status: {
             type: DataTypes.BOOLEAN,
-            allowNull: false
-        }
+            allowNull: false,
+        },
     },
     {
-        tableName: 'folder',
-        timestamps: true
+        sequelize,
+        tableName: 'folder'
     }
 );
 
