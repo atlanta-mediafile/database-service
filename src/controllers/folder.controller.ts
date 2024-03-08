@@ -7,7 +7,6 @@ class FolderController {
             let errors = [];
             const { id, name, parentId, createdDate, status } = req.body;
             const userId = req.params.userId;
-            console.log(userId);
             errors = this.validateFolderData(
                 id,
                 name,
