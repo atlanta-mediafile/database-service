@@ -112,7 +112,7 @@ class FolderController {
     };
 
     private validateFolderData = (
-        id: any,
+        folderId: any,
         name: any,
         parentId: any,
         createdDate: any,
@@ -122,40 +122,52 @@ class FolderController {
     ): string[] => {
         const errors: string[] = [];
 
-        if (!id) {
+        if (!folderId) {
             errors.push("Missing id");
-        } else if (typeof id !== "string") {
+        } else if (typeof folderId !== "string") {
             errors.push("Invalid id");
-        }
-        if (!name) {
-            errors.push("Missing name");
-        } else if (typeof name !== "string") {
-            errors.push("Invalid name");
         }
         if (!userId) {
             errors.push("Missing userId");
         } else if (typeof userId !== "string") {
             errors.push("Invalid userId");
         }
-        if (method === "create") {
-            if (parentId) {
-                if (typeof parentId !== "string") {
+
+        switch (method) {
+            case "create":
+                if (!name) {
+                    errors.push("Missing name");
+                } else if (typeof name !== "string") {
+                    errors.push("Invalid name");
+                }
+                if (parentId && typeof parentId !== "string") {
                     errors.push("Invalid parentId");
                 }
-            }
-            if (!createdDate) {
-                errors.push("Missing createdDate");
-            } else {
-                const parsedDate = new Date(createdDate);
-                if (isNaN(parsedDate.getTime())) {
-                    errors.push("Invalid createdDate");
+                if (!createdDate) {
+                    errors.push("Missing createdDate");
+                } else {
+                    const parsedDate = new Date(createdDate);
+                    if (isNaN(parsedDate.getTime())) {
+                        errors.push("Invalid createdDate");
+                    }
                 }
-            }
-            if (!status) {
-                errors.push("Missing status");
-            } else if (typeof status !== "boolean") {
-                errors.push("Invalid status");
-            }
+                if (!status) {
+                    errors.push("Missing status");
+                } else if (typeof status !== "boolean") {
+                    errors.push("Invalid status");
+                }
+                break;
+
+            case "rename":
+                if (!name) {
+                    errors.push("Missing name");
+                } else if (typeof name !== "string") {
+                    errors.push("Invalid name");
+                }
+                break;
+
+            case "delete":
+                break;
         }
         return errors;
     };
