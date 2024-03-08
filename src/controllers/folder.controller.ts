@@ -111,6 +111,70 @@ class FolderController {
         }
     };
 
+    public delete = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const folderId = req.params.folderId;
+            errors = this.validateFolderData(
+                folderId,
+                null,
+                null,
+                null,
+                null,
+                userId,
+                "delete"
+            );
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const folder = await FolderModel.findOne({
+                where: {
+                    id: folderId,
+                    user_id: userId,
+                },
+            });
+            if (!folder) {
+                return res.status(404).send({
+                    errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            if (!folder.status) {
+                return res.status(404).send({
+                    errors: ["Folder is already delete"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const update = await folder.update({ status: false });
+            if (update) {
+                return res.status(200).send({
+                    errors: errors,
+                    success: true,
+                    data: update,
+                });
+            }
+            return res.status(500).send({
+                errors: ["Failed to delete folder"],
+                success: false,
+                data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
     private validateFolderData = (
         folderId: any,
         name: any,
