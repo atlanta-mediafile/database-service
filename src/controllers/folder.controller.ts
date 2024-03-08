@@ -20,7 +20,7 @@ class FolderController {
                 return res.status(400).send({
                     errors: errors,
                     success: false,
-                    data: "",
+                    data: null,
                 });
             }
             const newFolder = await FolderModel.create({
@@ -41,14 +41,14 @@ class FolderController {
             return res.status(500).send({
                 errors: ["Failed to create folder"],
                 success: false,
-                data: "",
+                data: null,
             });
         } catch (error) {
             console.log(error);
             return res.status(500).send({
                 errors: ["Internal server error", error],
                 success: false,
-                data: "",
+                data: null,
             });
         }
     };
