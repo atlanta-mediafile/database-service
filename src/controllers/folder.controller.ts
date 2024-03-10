@@ -88,7 +88,14 @@ class FolderController {
                     data: null,
                 });
             }
-            if(folder.name === name){
+            if (!folder.status) {
+                return res.status(404).send({
+                    errors: ["Folder is deleted"],
+                    success: false,
+                    data: null,
+                });
+            }
+            if (folder.name === name) {
                 return res.status(409).send({
                     errors: ["Folder already has that name"],
                     success: false,
