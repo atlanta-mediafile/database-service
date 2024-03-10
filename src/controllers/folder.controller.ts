@@ -88,6 +88,13 @@ class FolderController {
                     data: null,
                 });
             }
+            if(folder.name === name){
+                return res.status(409).send({
+                    errors: ["Folder already has that name"],
+                    success: false,
+                    data: folder,
+                });
+            }
             const update = await folder.update({ name: name });
             if (update) {
                 return res.status(200).send({
