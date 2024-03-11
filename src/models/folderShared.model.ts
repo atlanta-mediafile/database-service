@@ -2,7 +2,7 @@ import { DataTypes, Model } from "sequelize";
 import sequelize from "../database/dbConnection";
 
 interface FolderSharedAtributes {
-    id: string;
+    id: number | null;
     folder_id: string;
     user_id: string;
     status: boolean;
@@ -12,7 +12,7 @@ class FolderSharedModel
     extends Model<FolderSharedAtributes>
     implements FolderSharedAtributes
 {
-    id!: string;
+    id!: number | null;
     folder_id!: string;
     user_id!: string;
     status!: boolean;
