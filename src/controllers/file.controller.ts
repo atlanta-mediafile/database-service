@@ -68,6 +68,55 @@ class FileController {
         }
     };
 
+    public get = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const fildeId = req.params.fileId;
+            errors = this.validateFileData(
+                fildeId,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                userId,
+                "get"
+            );
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const file = await FileModel.findOne({
+                where: { id: fildeId, user_id: userId },
+            });
+            if (file) {
+                return res.status(200).send({
+                    errors: errors,
+                    success: true,
+                    data: file,
+                });
+            }
+            return res.status(500).send({
+                errors: ["File not found"],
+                success: false,
+                data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
     private validateFileData = (
         fildeId: any,
         name: any,
