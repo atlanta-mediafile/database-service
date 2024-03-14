@@ -81,13 +81,18 @@ class FileController {
         method: string
     ): string[] => {
         const errors: string[] = [];
+        if (!fildeId) {
+            errors.push("Missing id");
+        } else if (typeof fildeId !== "string") {
+            errors.push("Invalid id");
+        }
+        if (!userId) {
+            errors.push("Missing userId");
+        } else if (typeof userId !== "string") {
+            errors.push("Invalid userId");
+        }
         switch (method) {
             case "create":
-                if (!fildeId) {
-                    errors.push("Missing id");
-                } else if (typeof fildeId !== "string") {
-                    errors.push("Invalid id");
-                }
                 if (!name) {
                     errors.push("Missing name");
                 } else if (typeof name !== "string") {
@@ -108,11 +113,6 @@ class FileController {
                 } else if (isNaN(parseInt(size))) {
                     errors.push("Invalid size");
                 }
-                if (!userId) {
-                    errors.push("Missing userId");
-                } else if (typeof userId !== "string") {
-                    errors.push("Invalid userId");
-                }
                 if (folderId && typeof folderId !== "string") {
                     errors.push("Invalid folderId");
                 }
@@ -129,6 +129,8 @@ class FileController {
                 } else if (typeof status !== "boolean") {
                     errors.push("Invalid status");
                 }
+                break;
+            case "get":
                 break;
         }
         return errors;
