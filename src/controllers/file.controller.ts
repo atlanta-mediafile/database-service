@@ -54,7 +54,7 @@ class FileController {
                 });
             }
             return res.status(500).send({
-                errors: ["Failed to create folder"],
+                errors: ["Failed to create file"],
                 success: false,
                 data: null,
             });
