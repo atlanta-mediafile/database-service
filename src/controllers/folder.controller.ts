@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import FolderModel from "../models/folder.model";
+import FileModel from "../models/file.model";
 
 class FolderController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -189,6 +190,73 @@ class FolderController {
         }
     };
 
+    public getFilesAndFoldersFromAFolder = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const folderId = req.params.folderId;
+            errors = this.validateFolderData(
+                folderId,
+                null,
+                null,
+                null,
+                null,
+                userId,
+                "getFilesAndFolderFromAFolder"
+            );
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const folder = await FolderModel.findOne({
+                where: {
+                    id: folderId,
+                    user_id: userId,
+                    status: true
+                },
+            });
+            if (!folder) {
+                return res.status(404).send({
+                    errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const folders = await FolderModel.findAll({
+                where: {
+                    parent_id: folderId,
+                    user_id: userId,
+                    status: true
+                }
+            });
+            const files = await FileModel.findAll({
+                where: {
+                    folder_id: folderId,
+                    user_id: userId,
+                    status: true
+                }
+            });
+            return res.status(200).send({
+                errors: errors,
+                success: true,
+                data: {
+                    "files": files,
+                    "folders": folders
+                },
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    }
+
     private validateFolderData = (
         folderId: any,
         name: any,
@@ -245,6 +313,8 @@ class FolderController {
                 break;
 
             case "delete":
+                break;
+            case "getFilesAndFolderFromAFolder":
                 break;
         }
         return errors;
