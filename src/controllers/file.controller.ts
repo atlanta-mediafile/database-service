@@ -94,7 +94,7 @@ class FileController {
                 });
             }
             const file = await FileModel.findOne({
-                where: { id: fildeId, user_id: userId },
+                where: { id: fildeId, user_id: userId, status: true },
             });
             if (file) {
                 return res.status(200).send({
