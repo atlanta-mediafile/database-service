@@ -15,6 +15,7 @@ class FileRouter{
         this._router.post('/:userId/file', this.fileController.create);
         this._router.get('/:userId/file/:fileId', this.fileController.get);
         this._router.patch('/:userId/file/:fileId', this.fileController.moveToAnotherFolder);
+        this._router.put('/:userId/file/:fileId', this.fileController.rename);
     }
 
     public get router(){
