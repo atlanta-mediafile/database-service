@@ -279,6 +279,67 @@ class FileController {
         }
     };
 
+    public delete = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const fileId = req.params.fileId;
+            errors = this.validateFileData(
+                fileId,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                userId,
+                "delete"
+            );
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const file = await FileModel.findOne({
+                where: {
+                    id: fileId,
+                    user_id: userId,
+                    status: true,
+                },
+            });
+            if (!file) {
+                return res.status(404).send({
+                    errors: ["File not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const update = await file.update({ status: false });
+            if (update) {
+                return res.status(200).send({
+                    errors: errors,
+                    success: true,
+                    data: update,
+                });
+            }
+            return res.status(500).send({
+                errors: ["Failed to delete file"],
+                success: false,
+                data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
     private validateFileData = (
         fildeId: any,
         name: any,
@@ -356,6 +417,8 @@ class FileController {
                 } else if (typeof name !== "string") {
                     errors.push("Invalid name");
                 }
+                break;
+            case "delete":
                 break;
         }
         return errors;
