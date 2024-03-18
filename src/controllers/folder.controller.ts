@@ -151,18 +151,12 @@ class FolderController {
                 where: {
                     id: folderId,
                     user_id: userId,
+                    status: true,
                 },
             });
             if (!folder) {
                 return res.status(404).send({
                     errors: ["Folder not found"],
-                    success: false,
-                    data: null,
-                });
-            }
-            if (!folder.status) {
-                return res.status(404).send({
-                    errors: ["Folder is already delete"],
                     success: false,
                     data: null,
                 });
