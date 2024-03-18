@@ -190,7 +190,10 @@ class FolderController {
         }
     };
 
-    public getFilesAndFoldersFromAFolder = async (req: Request, res: Response): Promise<Response> => {
+    public getFilesAndFoldersFromAFolder = async (
+        req: Request,
+        res: Response
+    ): Promise<Response> => {
         try {
             let errors = [];
             const userId = req.params.userId;
@@ -215,7 +218,7 @@ class FolderController {
                 where: {
                     id: folderId,
                     user_id: userId,
-                    status: true
+                    status: true,
                 },
             });
             if (!folder) {
@@ -229,22 +232,22 @@ class FolderController {
                 where: {
                     parent_id: folderId,
                     user_id: userId,
-                    status: true
-                }
+                    status: true,
+                },
             });
             const files = await FileModel.findAll({
                 where: {
                     folder_id: folderId,
                     user_id: userId,
-                    status: true
-                }
+                    status: true,
+                },
             });
             return res.status(200).send({
                 errors: errors,
                 success: true,
                 data: {
-                    "files": files,
-                    "folders": folders
+                    files: files,
+                    folders: folders,
                 },
             });
         } catch (error) {
@@ -255,7 +258,7 @@ class FolderController {
                 data: null,
             });
         }
-    }
+    };
 
     private validateFolderData = (
         folderId: any,
