@@ -214,6 +214,71 @@ class FileController {
         }
     };
 
+    public rename = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const fildeId = req.params.fileId;
+            const { name } = req.body;
+            errors = this.validateFileData(
+                fildeId,
+                name,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                userId,
+                "rename"
+            );
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const file = await FileModel.findOne({
+                where: { id: fildeId, user_id: userId, status: true },
+            });
+            if (!file) {
+                return res.status(404).send({
+                    errors: ["File not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            if (file.name === name) {
+                return res.status(409).send({
+                    errors: ["File already has that name"],
+                    success: false,
+                    data: file,
+                });
+            }
+            const update = await file.update({ name: name });
+            if (update) {
+                return res.status(200).send({
+                    errors: errors,
+                    success: true,
+                    data: update,
+                });
+            }
+            return res.status(500).send({
+                errors: ["Failed to rename the file"],
+                success: false,
+                data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
     private validateFileData = (
         fildeId: any,
         name: any,
@@ -283,6 +348,13 @@ class FileController {
                     errors.push("Missing folderId");
                 } else if (typeof folderId !== "string") {
                     errors.push("Invalid folderId");
+                }
+                break;
+            case "rename":
+                if (!name) {
+                    errors.push("Missing name");
+                } else if (typeof name !== "string") {
+                    errors.push("Invalid name");
                 }
                 break;
         }
