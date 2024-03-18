@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import FileModel from "../models/file.model";
+import FolderModel from "../models/folder.model";
 
 class FileController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -117,6 +118,102 @@ class FileController {
         }
     };
 
+    public moveToAnotherFolder = async (
+        req: Request,
+        res: Response
+    ): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const fildeId = req.params.fileId;
+            const { folderId } = req.body;
+            errors = this.validateFileData(
+                fildeId,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                folderId,
+                undefined,
+                undefined,
+                userId,
+                "moveToAnotherFolder"
+            );
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const file = await FileModel.findOne({
+                where: { id: fildeId, user_id: userId, status: true },
+            });
+            if (!file) {
+                return res.status(404).send({
+                    errors: ["File not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            if (
+                folderId === file.folder_id ||
+                (folderId === "/" && file.folder_id === null)
+            ) {
+                return res.status(200).send({
+                    errors: ["File is already in the specified folder"],
+                    success: true,
+                    data: file,
+                });
+            }
+            if (folderId === "/") {
+                const update = await file.update({ folder_id: null });
+                if (update) {
+                    return res.status(200).send({
+                        errors: errors,
+                        success: true,
+                        data: update,
+                    });
+                }
+                return res.status(500).send({
+                    errors: ["Failed to move the file"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const folder = await FolderModel.findOne({
+                where: { id: folderId, user_id: userId, status: true },
+            });
+            if (!folder) {
+                return res.status(404).send({
+                    errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const update = await file.update({ folder_id: folderId });
+            if (update) {
+                return res.status(200).send({
+                    errors: errors,
+                    success: true,
+                    data: update,
+                });
+            }
+            return res.status(500).send({
+                errors: ["Failed to move the file"],
+                success: false,
+                data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
     private validateFileData = (
         fildeId: any,
         name: any,
@@ -180,6 +277,13 @@ class FileController {
                 }
                 break;
             case "get":
+                break;
+            case "moveToAnotherFolder":
+                if (!folderId) {
+                    errors.push("Missing folderId");
+                } else if (typeof folderId !== "string") {
+                    errors.push("Invalid folderId");
+                }
                 break;
         }
         return errors;
