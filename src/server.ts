@@ -1,14 +1,17 @@
 import express, { Application, json } from "express";
 import FolderRouter from "./routes/folder.router";
 import sequelize from "./database/dbConnection";
+import FileRouter from "./routes/file.router";
 
 class Server {
     private backend: Application;
     private folderRouter: FolderRouter;
+    private fileRouter: FileRouter;
 
     constructor() {
         this.backend = express();
         this.folderRouter = new FolderRouter();
+        this.fileRouter = new FileRouter();
         this.config();
         this.connectDatabase();
         this.route();
@@ -31,6 +34,7 @@ class Server {
 
     private route = (): void => {
         this.backend.use("/user", this.folderRouter.router);
+        this.backend.use("/user", this.fileRouter.router);
     };
 
     public start(): void {
