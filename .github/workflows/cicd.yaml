@@ -112,10 +112,10 @@ jobs:
     needs: [publish]
     steps:
     - uses: actions/checkout@v4
+
     - name: Deploy docker
       uses: appleboy/ssh-action@v1.0.3
       with:
-
         host: ${{ secrets.DEPLOY_HOST }}
         port: ${{ secrets.DEPLOY_PORT }}
         username: ${{ secrets.DEPLOY_USERNAME }}
@@ -131,4 +131,4 @@ jobs:
           git pull origin main
           
           docker compose down
-          docker compose up -d
+          ${{ secrets.DEPLOY_ENV }} docker compose up -d
