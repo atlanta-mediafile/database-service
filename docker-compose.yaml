@@ -34,7 +34,7 @@ services:
         ipv4_address: 172.18.0.20
 
   app:
-    image: app:0.0.1
+    image: diegomated1/database-service:${APP_VERSION}
     container_name: database-service
     restart: always
     depends_on: [ postgres, pgadmin ]
