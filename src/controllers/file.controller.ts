@@ -363,7 +363,7 @@ class FileController {
                 errors.push("Invalid user ids");
             }
             for (const user of users) {
-                if (typeof(user) !== "string" || user.length === 0) {
+                if (typeof user !== "string" || user.length === 0) {
                     errors.push("Invalid user ids");
                     break;
                 }
