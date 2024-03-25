@@ -104,6 +104,21 @@ class FileController {
                     data: file,
                 });
             }
+            const isSharedFile = await FileSharedModel.findOne({
+                where: { file_id: fildeId, user_id: userId, status: true },
+            });
+            if (isSharedFile) {
+                const sharedFile = await FileModel.findOne({
+                    where: { id: fildeId, status: true },
+                });
+                if (sharedFile) {
+                    return res.status(200).send({
+                        errors: errors,
+                        success: true,
+                        data: sharedFile,
+                    });
+                }
+            }
             return res.status(404).send({
                 errors: ["File not found"],
                 success: false,
