@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import FileModel from "../models/file.model";
 import FolderModel from "../models/folder.model";
+import FileSharedModel from "../models/fileShared.model";
 
 class FileController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -340,6 +341,119 @@ class FileController {
         }
     };
 
+    public share = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const fileId = req.params.fileId;
+            const { users } = req.body;
+            errors = this.validateFileData(
+                fileId,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                userId,
+                "share"
+            );
+            if (!Array.isArray(users)) {
+                errors.push("Invalid user ids");
+            }
+            for (const user of users) {
+                if (typeof(user) !== "string" || user.length === 0) {
+                    errors.push("Invalid user ids");
+                    break;
+                }
+            }
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const file = await FileModel.findOne({
+                where: {
+                    id: fileId,
+                    user_id: userId,
+                    status: true,
+                },
+            });
+            if (!file) {
+                return res.status(404).send({
+                    errors: ["File not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            var newRows = [];
+            var updateStatusRows = [];
+            var alreadyFileShared = [];
+            var errorIds: string[] = [];
+            for (const id of users) {
+                const fileShared = await FileSharedModel.findOne({
+                    where: { file_id: fileId, user_id: id },
+                });
+                if (fileShared) {
+                    if (!fileShared.status) {
+                        const update = await fileShared.update({
+                            status: true,
+                        });
+                        if (update) {
+                            updateStatusRows.push(update);
+                        } else {
+                            errorIds.push(id);
+                        }
+                    } else {
+                        alreadyFileShared.push(fileShared);
+                    }
+                    continue;
+                }
+                const newFileShared = await FileSharedModel.create({
+                    file_id: fileId,
+                    user_id: id,
+                    status: true,
+                });
+                if (newFileShared) {
+                    newRows.push(newFileShared);
+                } else {
+                    errorIds.push(id);
+                }
+            }
+            if (errorIds.length > 0) {
+                return res.status(500).send({
+                    errors: ["Failed to create all fileShared"],
+                    success: false,
+                    data: {
+                        "created fileShared": newRows,
+                        "updated fileShared": updateStatusRows,
+                        "already fileShared": alreadyFileShared,
+                        "userIds failed fileShared": errorIds,
+                    },
+                });
+            }
+            return res.status(200).send({
+                errors: errors,
+                success: true,
+                data: {
+                    "created fileShared": newRows,
+                    "updated fileShared": updateStatusRows,
+                    "already fileShared": alreadyFileShared,
+                },
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
     private validateFileData = (
         fildeId: any,
         name: any,
@@ -419,6 +533,8 @@ class FileController {
                 }
                 break;
             case "delete":
+                break;
+            case "share":
                 break;
         }
         return errors;
