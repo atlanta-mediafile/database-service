@@ -17,6 +17,7 @@ class FileRouter{
         this._router.patch('/:userId/file/:fileId', this.fileController.moveToAnotherFolder);
         this._router.put('/:userId/file/:fileId', this.fileController.rename);
         this._router.delete('/:userId/file/:fileId', this.fileController.delete);
+        this._router.post('/:userId/file/:fileId', this.fileController.share);
     }
 
     public get router(){
