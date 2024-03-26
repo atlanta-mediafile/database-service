@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import FolderModel from "../models/folder.model";
 import FileModel from "../models/file.model";
 import sequelize from "../database/dbConnection";
+import FolderSharedModel from "../models/folderShared.model";
 
 class FolderController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -355,6 +356,116 @@ class FolderController {
                 errors: ["Failed to move the folder"],
                 success: false,
                 data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
+    public share = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const folderId = req.params.folderId;
+            const { users } = req.body;
+            errors = this.validateFolderData(
+                folderId,
+                null,
+                null,
+                null,
+                null,
+                userId,
+                "share"
+            );
+            if (!Array.isArray(users)) {
+                errors.push("Invalid user ids");
+            }
+            for (const user of users) {
+                if (typeof user !== "string" || user.length === 0) {
+                    errors.push("Invalid user ids");
+                    break;
+                }
+            }
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const folder = await FolderModel.findOne({
+                where: {
+                    id: folderId,
+                    user_id: userId,
+                    status: true,
+                },
+            });
+            if (!folder) {
+                return res.status(404).send({
+                    errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            var newRows = [];
+            var updateStatusRows = [];
+            var alreadyFolderShared = [];
+            var errorIds: string[] = [];
+            for (const id of users) {
+                const folderShared = await FolderSharedModel.findOne({
+                    where: { folder_id: folderId, user_id: id },
+                });
+                if (folderShared) {
+                    if (!folderShared.status) {
+                        const update = await folderShared.update({
+                            status: true,
+                        });
+                        if (update) {
+                            updateStatusRows.push(update);
+                        } else {
+                            errorIds.push(id);
+                        }
+                    } else {
+                        alreadyFolderShared.push(folderShared);
+                    }
+                    continue;
+                }
+                const newFolderShared = await FolderSharedModel.create({
+                    folder_id: folderId,
+                    user_id: id,
+                    status: true,
+                });
+                if (newFolderShared) {
+                    newRows.push(newFolderShared);
+                } else {
+                    errorIds.push(id);
+                }
+            }
+            if (errorIds.length > 0) {
+                return res.status(500).send({
+                    errors: ["Failed to create all folderShared"],
+                    success: false,
+                    data: {
+                        "created folderShared": newRows,
+                        "updated folderShared": updateStatusRows,
+                        "already folderShared": alreadyFolderShared,
+                        "userIds failed folderShared": errorIds,
+                    },
+                });
+            }
+            return res.status(200).send({
+                errors: errors,
+                success: true,
+                data: {
+                    "created folderShared": newRows,
+                    "updated folderShared": updateStatusRows,
+                    "already folderShared": alreadyFolderShared,
+                },
             });
         } catch (error) {
             console.log(error);
