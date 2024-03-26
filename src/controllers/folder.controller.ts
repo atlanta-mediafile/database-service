@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import FolderModel from "../models/folder.model";
 import FileModel from "../models/file.model";
+import sequelize from "../database/dbConnection";
 
 class FolderController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -254,6 +255,117 @@ class FolderController {
         }
     };
 
+    public moveToAnotherFolder = async (
+        req: Request,
+        res: Response
+    ): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.userId;
+            const currentFolderId = req.params.folderId;
+            const { newFolderId } = req.body;
+            errors = this.validateFolderData(
+                currentFolderId,
+                null,
+                newFolderId,
+                null,
+                null,
+                userId,
+                "moveToAnotherFolder"
+            );
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const currentFolder = await FolderModel.findOne({
+                where: { id: currentFolderId, user_id: userId, status: true },
+            });
+            if (!currentFolder) {
+                return res.status(404).send({
+                    errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            if (
+                newFolderId === currentFolder.parent_id ||
+                (newFolderId === "/" && currentFolder.parent_id === null)
+            ) {
+                return res.status(200).send({
+                    errors: ["Folder is already in the specified folder"],
+                    success: true,
+                    data: currentFolder,
+                });
+            }
+            if (newFolderId === "/") {
+                const update = await currentFolder.update({ parent_id: null });
+                if (update) {
+                    return res.status(200).send({
+                        errors: errors,
+                        success: true,
+                        data: update,
+                    });
+                }
+                return res.status(500).send({
+                    errors: ["Failed to move the folder"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const newFolder = await FolderModel.findOne({
+                where: { id: newFolderId, user_id: userId, status: true },
+            });
+            if (!newFolder) {
+                return res.status(404).send({
+                    errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const isChild = (await sequelize.query(
+                `SELECT verify_new_folder_is_child_of_current_folder(:currentId, :newId) AS is_child`,
+                {
+                    replacements: {
+                        currentId: currentFolderId,
+                        newId: newFolderId,
+                    },
+                }
+            )) as { is_child: boolean }[][];
+            if (isChild[0][0].is_child) {
+                return res.status(400).send({
+                    errors: ["Cannot move a folder into one of its subfolders"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const update = await currentFolder.update({
+                parent_id: newFolderId,
+            });
+            if (update) {
+                return res.status(200).send({
+                    errors: errors,
+                    success: true,
+                    data: update,
+                });
+            }
+            return res.status(500).send({
+                errors: ["Failed to move the folder"],
+                success: false,
+                data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
     private validateFolderData = (
         folderId: any,
         name: any,
@@ -312,6 +424,15 @@ class FolderController {
             case "delete":
                 break;
             case "getFilesAndFolderFromAFolder":
+                break;
+            case "share":
+                break;
+            case "moveToAnotherFolder":
+                if (!parentId) {
+                    errors.push("Missing new folder id");
+                } else if (typeof parentId !== "string") {
+                    errors.push("Invalid new folder id");
+                }
                 break;
         }
         return errors;
