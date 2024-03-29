@@ -87,3 +87,50 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION delete_files_and_folders_from_a_folder(folder_id_arg UUID)
+RETURNS TABLE (
+    deleted_id UUID
+) AS $$
+BEGIN
+
+    CREATE TEMP TABLE temp_subfolders(
+        id UUID
+    );
+
+    CREATE TEMP TABLE deleted_ids(
+        deleted_id UUID
+    );
+
+    INSERT INTO deleted_ids SELECT id FROM file WHERE folder_id = folder_id_arg AND status = TRUE;
+    UPDATE file SET status = FALSE WHERE folder_id = folder_id_arg AND status = TRUE;
+
+    INSERT INTO deleted_ids SELECT id FROM folder WHERE id = folder_id_arg AND status = TRUE;
+    UPDATE folder SET status = FALSE WHERE id = folder_id_arg AND status = TRUE;
+
+    WITH RECURSIVE cte_subfolders AS (
+        SELECT id
+        FROM folder
+        WHERE parent_id = folder_id_arg AND status = TRUE
+        UNION ALL
+        SELECT f.id
+        FROM folder f
+        INNER JOIN cte_subfolders sf ON f.parent_id = sf.id
+    )
+
+    INSERT INTO temp_subfolders SELECT id FROM cte_subfolders;
+
+    INSERT INTO deleted_ids SELECT id FROM file WHERE folder_id IN (SELECT id FROM temp_subfolders) AND status = TRUE;
+    UPDATE file SET status = FALSE
+    WHERE folder_id IN (SELECT id FROM temp_subfolders) AND status = TRUE;
+
+    INSERT INTO deleted_ids SELECT id FROM folder WHERE id IN (SELECT id FROM temp_subfolders);
+    UPDATE folder SET status = FALSE
+    WHERE id IN (SELECT id FROM temp_subfolders);
+
+    RETURN QUERY SELECT * FROM deleted_ids;
+
+    DROP TABLE temp_subfolders;
+    DROP TABLE deleted_ids;
+END;
+$$ LANGUAGE plpgsql;
