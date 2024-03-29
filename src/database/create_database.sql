@@ -59,3 +59,31 @@ BEGIN
     RETURN is_child;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION verify_folder_shared(folder_id_arg UUID, user_id_arg UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    current_folder_id UUID;
+    found BOOLEAN;
+BEGIN
+    current_folder_id := folder_id_arg;
+    LOOP
+        SELECT EXISTS(
+            SELECT 1 FROM folder_shared
+            WHERE folder_id = current_folder_id
+            AND user_id = user_id_arg
+            AND status = TRUE
+        ) INTO found;
+
+        IF found THEN
+            RETURN TRUE;
+        END IF;
+
+        SELECT parent_id INTO current_folder_id FROM folder WHERE id = current_folder_id AND status = TRUE;
+
+        IF current_folder_id IS NULL THEN
+            RETURN FALSE;
+        END IF;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
