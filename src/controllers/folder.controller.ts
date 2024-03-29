@@ -217,27 +217,58 @@ class FolderController {
                     status: true,
                 },
             });
+            var isShared: boolean = false;
             if (!folder) {
-                return res.status(404).send({
-                    errors: ["Folder not found"],
-                    success: false,
-                    data: null,
+                const isSharedFolder = (await sequelize.query(
+                    `SELECT verify_folder_shared(:folderId, :userId) AS result`,
+                    {
+                        replacements: {
+                            folderId: folderId,
+                            userId: userId,
+                        },
+                    }
+                )) as { result: boolean }[][];
+                if (isSharedFolder[0][0].result) {
+                    isShared = true;
+                } else {
+                    return res.status(404).send({
+                        errors: ["Folder not found"],
+                        success: false,
+                        data: null,
+                    });
+                }
+            }
+            var folders, files;
+            if (isShared) {
+                folders = await FolderModel.findAll({
+                    where: {
+                        parent_id: folderId,
+                        status: true,
+                    },
+                });
+                files = await FileModel.findAll({
+                    where: {
+                        folder_id: folderId,
+                        status: true,
+                    },
+                });
+            } else {
+                folders = await FolderModel.findAll({
+                    where: {
+                        parent_id: folderId,
+                        user_id: userId,
+                        status: true,
+                    },
+                });
+                files = await FileModel.findAll({
+                    where: {
+                        folder_id: folderId,
+                        user_id: userId,
+                        status: true,
+                    },
                 });
             }
-            const folders = await FolderModel.findAll({
-                where: {
-                    parent_id: folderId,
-                    user_id: userId,
-                    status: true,
-                },
-            });
-            const files = await FileModel.findAll({
-                where: {
-                    folder_id: folderId,
-                    user_id: userId,
-                    status: true,
-                },
-            });
+
             return res.status(200).send({
                 errors: errors,
                 success: true,
