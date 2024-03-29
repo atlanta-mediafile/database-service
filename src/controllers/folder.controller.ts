@@ -163,18 +163,39 @@ class FolderController {
                     data: null,
                 });
             }
-            const update = await folder.update({ status: false });
-            if (update) {
-                return res.status(200).send({
-                    errors: errors,
-                    success: true,
-                    data: update,
+            const deletedFilesAndFolders = await sequelize.query(
+                `SELECT delete_files_and_folders_from_a_folder(:folderId)`,
+                {
+                    replacements: {
+                        folderId: folderId,
+                    },
+                }
+            );
+            if (!deletedFilesAndFolders) {
+                return res.status(500).send({
+                    errors: ["Failed to delete folder"],
+                    success: false,
+                    data: null,
                 });
             }
-            return res.status(500).send({
-                errors: ["Failed to delete folder"],
-                success: false,
-                data: null,
+            const deletedFilesAndFoldersIds: any[] = [];
+            for (
+                let index = 0;
+                index < deletedFilesAndFolders[0].length;
+                index++
+            ) {
+                const row: any = deletedFilesAndFolders[0][index];
+                console.log(row.delete_files_and_folders_from_a_folder);
+                deletedFilesAndFoldersIds.push(
+                    row.delete_files_and_folders_from_a_folder
+                );
+            }
+            return res.status(200).send({
+                errors: [],
+                success: true,
+                data: {
+                    deletedFilesAndFoldersIds: deletedFilesAndFoldersIds,
+                },
             });
         } catch (error) {
             console.log(error);
