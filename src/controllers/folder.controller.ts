@@ -26,6 +26,23 @@ class FolderController {
                     data: null,
                 });
             }
+            if (parentId) {
+                const parentFolder = await FolderModel.findOne({
+                    where: {
+                        id: parentId,
+                        user_id: userId,
+                        status: true,
+                    },
+                });
+                if (!parentFolder) {
+                    errors.push("Invalid parentId");
+                    return res.status(400).send({
+                        errors: errors,
+                        success: false,
+                        data: null,
+                    });
+                }
+            }
             const newFolder = await FolderModel.create({
                 id: id,
                 name: name,
