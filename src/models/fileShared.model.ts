@@ -40,6 +40,7 @@ FileSharedModel.init(
         },
     },
     {
+        timestamps: false,
         sequelize,
         tableName: "file_shared",
     }
