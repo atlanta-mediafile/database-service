@@ -40,6 +40,7 @@ FolderSharedModel.init(
         },
     },
     {
+        timestamps: false,
         sequelize,
         tableName: "folder_shared",
     }
