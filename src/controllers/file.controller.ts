@@ -37,6 +37,23 @@ class FileController {
                     data: null,
                 });
             }
+            if (folderId) {
+                const parentFolder = await FolderModel.findOne({
+                    where: {
+                        id: folderId,
+                        user_id: userId,
+                        status: true,
+                    },
+                });
+                if (!parentFolder) {
+                    errors.push("Invalid folderId");
+                    return res.status(400).send({
+                        errors: errors,
+                        success: false,
+                        data: null,
+                    });
+                }
+            }
             const newFolder = await FileModel.create({
                 id: id,
                 name: name,
