@@ -8,13 +8,13 @@ class FolderController {
     public create = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const { id, name, parentId, createdDate, status } = req.body;
-            const userId = req.params.userId;
+            const { id, name, parent_id, created_date, status } = req.body;
+            const userId = req.params.user_id;
             errors = this.validateFolderData(
                 id,
                 name,
-                parentId,
-                createdDate,
+                parent_id,
+                created_date,
                 status,
                 userId,
                 "create"
@@ -26,10 +26,10 @@ class FolderController {
                     data: null,
                 });
             }
-            if (parentId) {
+            if (parent_id) {
                 const parentFolder = await FolderModel.findOne({
                     where: {
-                        id: parentId,
+                        id: parent_id,
                         user_id: userId,
                         status: true,
                     },
@@ -46,8 +46,8 @@ class FolderController {
             const newFolder = await FolderModel.create({
                 id: id,
                 name: name,
-                parent_id: parentId,
-                created_date: createdDate,
+                parent_id: parent_id,
+                created_date: created_date,
                 status: status,
                 user_id: userId,
             });
@@ -77,8 +77,8 @@ class FolderController {
         try {
             let errors = [];
             const { name } = req.body;
-            const userId = req.params.userId;
-            const folderId = req.params.folderId;
+            const userId = req.params.user_id;
+            const folderId = req.params.folder_id;
             errors = this.validateFolderData(
                 folderId,
                 name,
@@ -148,8 +148,8 @@ class FolderController {
     public delete = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const folderId = req.params.folderId;
+            const userId = req.params.user_id;
+            const folderId = req.params.folder_id;
             errors = this.validateFolderData(
                 folderId,
                 null,
@@ -230,8 +230,8 @@ class FolderController {
     ): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const folderId = req.params.folderId;
+            const userId = req.params.user_id;
+            const folderId = req.params.folder_id;
             errors = this.validateFolderData(
                 folderId,
                 null,
@@ -331,9 +331,9 @@ class FolderController {
     ): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const currentFolderId = req.params.folderId;
-            const { newFolderId } = req.body;
+            const userId = req.params.user_id;
+            const currentFolderId = req.params.folder_id;
+            const newFolderId = req.body.newFolderId;
             errors = this.validateFolderData(
                 currentFolderId,
                 null,
@@ -439,8 +439,8 @@ class FolderController {
     public share = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const folderId = req.params.folderId;
+            const userId = req.params.user_id;
+            const folderId = req.params.folder_id;
             const { users } = req.body;
             errors = this.validateFolderData(
                 folderId,
