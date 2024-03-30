@@ -12,21 +12,21 @@ class FileController {
                 id,
                 name,
                 extension,
-                mimeType,
+                mime_type,
                 size,
-                folderId,
-                createdDate,
+                folder_id,
+                created_date,
                 status,
             } = req.body;
-            const userId = req.params.userId;
+            const userId = req.params.user_id;
             errors = this.validateFileData(
                 id,
                 name,
                 extension,
-                mimeType,
+                mime_type,
                 size,
-                folderId,
-                createdDate,
+                folder_id,
+                created_date,
                 status,
                 userId,
                 "create"
@@ -38,10 +38,10 @@ class FileController {
                     data: null,
                 });
             }
-            if (folderId) {
+            if (folder_id) {
                 const parentFolder = await FolderModel.findOne({
                     where: {
-                        id: folderId,
+                        id: folder_id,
                         user_id: userId,
                         status: true,
                     },
@@ -60,10 +60,10 @@ class FileController {
                 name: name,
                 user_id: userId,
                 extension: extension,
-                mime_type: mimeType,
+                mime_type: mime_type,
                 size: size,
-                folder_id: folderId,
-                created_date: createdDate,
+                folder_id: folder_id,
+                created_date: created_date,
                 status: status,
             });
             if (newFolder) {
@@ -91,8 +91,8 @@ class FileController {
     public get = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fildeId = req.params.fileId;
+            const userId = req.params.user_id;
+            const fildeId = req.params.file_id;
             errors = this.validateFileData(
                 fildeId,
                 undefined,
@@ -182,9 +182,9 @@ class FileController {
     ): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fildeId = req.params.fileId;
-            const { folderId } = req.body;
+            const userId = req.params.user_id;
+            const fildeId = req.params.file_id;
+            const folderId = req.body.folder_id;
             errors = this.validateFileData(
                 fildeId,
                 undefined,
@@ -275,8 +275,8 @@ class FileController {
     public rename = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fildeId = req.params.fileId;
+            const userId = req.params.user_id;
+            const fildeId = req.params.file_id;
             const { name } = req.body;
             errors = this.validateFileData(
                 fildeId,
@@ -340,8 +340,8 @@ class FileController {
     public delete = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fileId = req.params.fileId;
+            const userId = req.params.user_id;
+            const fileId = req.params.file_id;
             errors = this.validateFileData(
                 fileId,
                 undefined,
@@ -401,8 +401,8 @@ class FileController {
     public share = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fileId = req.params.fileId;
+            const userId = req.params.user_id;
+            const fileId = req.params.file_id;
             const { users } = req.body;
             errors = this.validateFileData(
                 fileId,
