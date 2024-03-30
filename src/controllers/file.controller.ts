@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import FileModel from "../models/file.model";
 import FolderModel from "../models/folder.model";
 import FileSharedModel from "../models/fileShared.model";
+import sequelize from "../database/dbConnection";
 
 class FileController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -133,6 +134,30 @@ class FileController {
                         errors: errors,
                         success: true,
                         data: sharedFile,
+                    });
+                }
+            }
+            const anotherUserFile = await FileModel.findOne({
+                where: {
+                    id: fildeId,
+                    status: true,
+                },
+            });
+            if (anotherUserFile) {
+                const isSharedFolder = (await sequelize.query(
+                    `SELECT verify_folder_shared(:folderId, :userId) AS result`,
+                    {
+                        replacements: {
+                            folderId: anotherUserFile.folder_id,
+                            userId: userId,
+                        },
+                    }
+                )) as { result: boolean }[][];
+                if (isSharedFolder[0][0].result) {
+                    return res.status(200).send({
+                        errors: errors,
+                        success: true,
+                        data: anotherUserFile,
                     });
                 }
             }
