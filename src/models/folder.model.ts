@@ -48,8 +48,9 @@ FolderModel.init(
         },
     },
     {
+        timestamps: false,
         sequelize,
-        tableName: 'folder'
+        tableName: "folder",
     }
 );
 
