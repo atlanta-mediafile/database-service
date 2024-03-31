@@ -1,24 +1,24 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../database/dbConnection";
 
-interface FolderSharedAtributes {
+interface FileSharedAtributes {
     id: number | null;
-    folder_id: string;
+    file_id: string;
     user_id: string;
     status: boolean;
 }
 
-class FolderSharedModel
-    extends Model<FolderSharedAtributes>
-    implements FolderSharedAtributes
+class FileSharedModel
+    extends Model<FileSharedAtributes>
+    implements FileSharedAtributes
 {
     id!: number | null;
-    folder_id!: string;
+    file_id!: string;
     user_id!: string;
     status!: boolean;
 }
 
-FolderSharedModel.init(
+FileSharedModel.init(
     {
         id: {
             type: DataTypes.INTEGER,
@@ -26,7 +26,7 @@ FolderSharedModel.init(
             primaryKey: true,
             autoIncrement: true,
         },
-        folder_id: {
+        file_id: {
             type: DataTypes.UUID,
             allowNull: false,
         },
@@ -42,8 +42,8 @@ FolderSharedModel.init(
     {
         timestamps: false,
         sequelize,
-        tableName: "folder_shared",
+        tableName: "file_shared",
     }
 );
 
-export default FolderSharedModel;
+export default FileSharedModel;

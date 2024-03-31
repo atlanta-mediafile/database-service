@@ -16,6 +16,8 @@ class FolderRouter{
         this._router.put('/:userId/folder/:folderId', this.folderController.rename);
         this._router.delete('/:userId/folder/:folderId', this.folderController.delete);
         this._router.get('/:userId/folder/:folderId', this.folderController.getFilesAndFoldersFromAFolder);
+        this._router.patch('/:userId/folder/:folderId', this.folderController.moveToAnotherFolder);
+        this._router.post('/:userId/folder/:folderId', this.folderController.share);
     }
 
     public get router(){

@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import FileModel from "../models/file.model";
 import FolderModel from "../models/folder.model";
+import FileSharedModel from "../models/fileShared.model";
+import sequelize from "../database/dbConnection";
 
 class FileController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -10,21 +12,21 @@ class FileController {
                 id,
                 name,
                 extension,
-                mimeType,
+                mime_type,
                 size,
-                folderId,
-                createdDate,
+                folder_id,
+                created_date,
                 status,
             } = req.body;
-            const userId = req.params.userId;
+            const userId = req.params.user_id;
             errors = this.validateFileData(
                 id,
                 name,
                 extension,
-                mimeType,
+                mime_type,
                 size,
-                folderId,
-                createdDate,
+                folder_id,
+                created_date,
                 status,
                 userId,
                 "create"
@@ -36,15 +38,32 @@ class FileController {
                     data: null,
                 });
             }
+            if (folder_id) {
+                const parentFolder = await FolderModel.findOne({
+                    where: {
+                        id: folder_id,
+                        user_id: userId,
+                        status: true,
+                    },
+                });
+                if (!parentFolder) {
+                    errors.push("Invalid folderId");
+                    return res.status(400).send({
+                        errors: errors,
+                        success: false,
+                        data: null,
+                    });
+                }
+            }
             const newFolder = await FileModel.create({
                 id: id,
                 name: name,
                 user_id: userId,
                 extension: extension,
-                mime_type: mimeType,
+                mime_type: mime_type,
                 size: size,
-                folder_id: folderId,
-                created_date: createdDate,
+                folder_id: folder_id,
+                created_date: created_date,
                 status: status,
             });
             if (newFolder) {
@@ -72,8 +91,8 @@ class FileController {
     public get = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fildeId = req.params.fileId;
+            const userId = req.params.user_id;
+            const fildeId = req.params.file_id;
             errors = this.validateFileData(
                 fildeId,
                 undefined,
@@ -103,6 +122,45 @@ class FileController {
                     data: file,
                 });
             }
+            const isSharedFile = await FileSharedModel.findOne({
+                where: { file_id: fildeId, user_id: userId, status: true },
+            });
+            if (isSharedFile) {
+                const sharedFile = await FileModel.findOne({
+                    where: { id: fildeId, status: true },
+                });
+                if (sharedFile) {
+                    return res.status(200).send({
+                        errors: errors,
+                        success: true,
+                        data: sharedFile,
+                    });
+                }
+            }
+            const anotherUserFile = await FileModel.findOne({
+                where: {
+                    id: fildeId,
+                    status: true,
+                },
+            });
+            if (anotherUserFile) {
+                const isSharedFolder = (await sequelize.query(
+                    `SELECT verify_folder_shared(:folderId, :userId) AS result`,
+                    {
+                        replacements: {
+                            folderId: anotherUserFile.folder_id,
+                            userId: userId,
+                        },
+                    }
+                )) as { result: boolean }[][];
+                if (isSharedFolder[0][0].result) {
+                    return res.status(200).send({
+                        errors: errors,
+                        success: true,
+                        data: anotherUserFile,
+                    });
+                }
+            }
             return res.status(404).send({
                 errors: ["File not found"],
                 success: false,
@@ -124,9 +182,9 @@ class FileController {
     ): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fildeId = req.params.fileId;
-            const { folderId } = req.body;
+            const userId = req.params.user_id;
+            const fildeId = req.params.file_id;
+            const folderId = req.body.folder_id;
             errors = this.validateFileData(
                 fildeId,
                 undefined,
@@ -217,8 +275,8 @@ class FileController {
     public rename = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fildeId = req.params.fileId;
+            const userId = req.params.user_id;
+            const fildeId = req.params.file_id;
             const { name } = req.body;
             errors = this.validateFileData(
                 fildeId,
@@ -282,8 +340,8 @@ class FileController {
     public delete = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const userId = req.params.userId;
-            const fileId = req.params.fileId;
+            const userId = req.params.user_id;
+            const fileId = req.params.file_id;
             errors = this.validateFileData(
                 fileId,
                 undefined,
@@ -329,6 +387,119 @@ class FileController {
                 errors: ["Failed to delete file"],
                 success: false,
                 data: null,
+            });
+        } catch (error) {
+            console.log(error);
+            return res.status(500).send({
+                errors: ["Internal server error", error],
+                success: false,
+                data: null,
+            });
+        }
+    };
+
+    public share = async (req: Request, res: Response): Promise<Response> => {
+        try {
+            let errors = [];
+            const userId = req.params.user_id;
+            const fileId = req.params.file_id;
+            const { users } = req.body;
+            errors = this.validateFileData(
+                fileId,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                userId,
+                "share"
+            );
+            if (!Array.isArray(users)) {
+                errors.push("Invalid user ids");
+            }
+            for (const user of users) {
+                if (typeof user !== "string" || user.length === 0) {
+                    errors.push("Invalid user ids");
+                    break;
+                }
+            }
+            if (errors.length > 0) {
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
+            const file = await FileModel.findOne({
+                where: {
+                    id: fileId,
+                    user_id: userId,
+                    status: true,
+                },
+            });
+            if (!file) {
+                return res.status(404).send({
+                    errors: ["File not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            var newRows = [];
+            var updateStatusRows = [];
+            var alreadyFileShared = [];
+            var errorIds: string[] = [];
+            for (const id of users) {
+                const fileShared = await FileSharedModel.findOne({
+                    where: { file_id: fileId, user_id: id },
+                });
+                if (fileShared) {
+                    if (!fileShared.status) {
+                        const update = await fileShared.update({
+                            status: true,
+                        });
+                        if (update) {
+                            updateStatusRows.push(update);
+                        } else {
+                            errorIds.push(id);
+                        }
+                    } else {
+                        alreadyFileShared.push(fileShared);
+                    }
+                    continue;
+                }
+                const newFileShared = await FileSharedModel.create({
+                    file_id: fileId,
+                    user_id: id,
+                    status: true,
+                });
+                if (newFileShared) {
+                    newRows.push(newFileShared);
+                } else {
+                    errorIds.push(id);
+                }
+            }
+            if (errorIds.length > 0) {
+                return res.status(500).send({
+                    errors: ["Failed to create all fileShared"],
+                    success: false,
+                    data: {
+                        "created fileShared": newRows,
+                        "updated fileShared": updateStatusRows,
+                        "already fileShared": alreadyFileShared,
+                        "userIds failed fileShared": errorIds,
+                    },
+                });
+            }
+            return res.status(200).send({
+                errors: errors,
+                success: true,
+                data: {
+                    "created fileShared": newRows,
+                    "updated fileShared": updateStatusRows,
+                    "already fileShared": alreadyFileShared,
+                },
             });
         } catch (error) {
             console.log(error);
@@ -419,6 +590,8 @@ class FileController {
                 }
                 break;
             case "delete":
+                break;
+            case "share":
                 break;
         }
         return errors;

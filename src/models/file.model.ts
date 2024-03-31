@@ -66,8 +66,9 @@ FileModel.init(
         },
     },
     {
+        timestamps: false,
         sequelize,
-        tableName: 'file'
+        tableName: "file",
     }
 );
 

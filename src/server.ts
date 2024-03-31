@@ -24,7 +24,6 @@ class Server {
 
     private async connectDatabase(): Promise<void> {
         try {
-            // {force: true}
             await sequelize.sync();
             console.log("Connection has been established successfully.");
         } catch (error) {

@@ -42,7 +42,7 @@ jobs:
       - name: Add global config
         run: |
           git config --global user.name 'diegomated1'
-          git config --global user.email 'diegocardwr2@gmail.com'
+          git config --global user.email 'diegocardwr@gmail.com'
 
       - name: Grants permisions
         run: chmod +x ./bin/version.sh
