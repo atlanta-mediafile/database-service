@@ -524,15 +524,26 @@ class FileController {
         method: string
     ): string[] => {
         const errors: string[] = [];
+        const regExpUUID = new RegExp(
+            "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        );
         if (!fildeId) {
             errors.push("Missing id");
-        } else if (typeof fildeId !== "string") {
-            errors.push("Invalid id");
+        } else {
+            if (typeof fildeId !== "string") {
+                errors.push("Invalid id");
+            } else if (!regExpUUID.test(fildeId)) {
+                errors.push("Invalid id");
+            }
         }
         if (!userId) {
             errors.push("Missing userId");
-        } else if (typeof userId !== "string") {
-            errors.push("Invalid userId");
+        } else {
+            if (typeof userId !== "string") {
+                errors.push("Invalid userId");
+            } else if (!regExpUUID.test(userId)) {
+                errors.push("Invalid userId");
+            }
         }
         switch (method) {
             case "create":
@@ -556,8 +567,12 @@ class FileController {
                 } else if (isNaN(parseInt(size))) {
                     errors.push("Invalid size");
                 }
-                if (folderId && typeof folderId !== "string") {
-                    errors.push("Invalid folderId");
+                if (folderId) {
+                    if (typeof folderId !== "string") {
+                        errors.push("Invalid folderId");
+                    } else if (!regExpUUID.test(folderId)) {
+                        errors.push("Invalid folderId");
+                    }
                 }
                 if (!createdDate) {
                     errors.push("Missing createdDate");
@@ -578,8 +593,12 @@ class FileController {
             case "moveToAnotherFolder":
                 if (!folderId) {
                     errors.push("Missing folderId");
-                } else if (typeof folderId !== "string") {
-                    errors.push("Invalid folderId");
+                } else {
+                    if (typeof folderId !== "string") {
+                        errors.push("Invalid folderId");
+                    } else if (!regExpUUID.test(folderId)) {
+                        errors.push("Invalid folderId");
+                    }
                 }
                 break;
             case "rename":
