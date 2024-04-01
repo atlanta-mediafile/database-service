@@ -556,18 +556,27 @@ class FolderController {
         method: string
     ): string[] => {
         const errors: string[] = [];
-
+        const regExpUUID = new RegExp(
+            "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        );
         if (!folderId) {
             errors.push("Missing id");
-        } else if (typeof folderId !== "string") {
-            errors.push("Invalid id");
+        } else {
+            if (typeof folderId !== "string") {
+                errors.push("Invalid id");
+            } else if (!regExpUUID.test(folderId)) {
+                errors.push("Invalid id");
+            }
         }
         if (!userId) {
             errors.push("Missing userId");
-        } else if (typeof userId !== "string") {
-            errors.push("Invalid userId");
+        } else {
+            if (typeof userId !== "string") {
+                errors.push("Invalid userId");
+            } else if (!regExpUUID.test(userId)) {
+                errors.push("Invalid userId");
+            }
         }
-
         switch (method) {
             case "create":
                 if (!name) {
@@ -575,8 +584,12 @@ class FolderController {
                 } else if (typeof name !== "string") {
                     errors.push("Invalid name");
                 }
-                if (parentId && typeof parentId !== "string") {
-                    errors.push("Invalid parentId");
+                if (parentId) {
+                    if (typeof parentId !== "string") {
+                        errors.push("Invalid parentId");
+                    } else if (!regExpUUID.test(folderId)) {
+                        errors.push("Invalid parentId");
+                    }
                 }
                 if (!createdDate) {
                     errors.push("Missing createdDate");
@@ -610,8 +623,12 @@ class FolderController {
             case "moveToAnotherFolder":
                 if (!parentId) {
                     errors.push("Missing new folder id");
-                } else if (typeof parentId !== "string") {
-                    errors.push("Invalid new folder id");
+                } else {
+                    if (typeof parentId !== "string") {
+                        errors.push("Invalid new folder id");
+                    } else if (!regExpUUID.test(parentId)) {
+                        errors.push("Invalid new folder id");
+                    }
                 }
                 break;
         }
