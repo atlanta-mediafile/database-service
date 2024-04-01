@@ -12,12 +12,12 @@ class FileRouter{
     }
 
     private config(){
-        this._router.post('/:userId/file', this.fileController.create);
-        this._router.get('/:userId/file/:fileId', this.fileController.get);
-        this._router.patch('/:userId/file/:fileId', this.fileController.moveToAnotherFolder);
-        this._router.put('/:userId/file/:fileId', this.fileController.rename);
-        this._router.delete('/:userId/file/:fileId', this.fileController.delete);
-        this._router.post('/:userId/file/:fileId', this.fileController.share);
+        this._router.post('/:user_id/file', this.fileController.create);
+        this._router.get('/:user_id/file/:file_id', this.fileController.get);
+        this._router.patch('/:user_id/file/:file_id', this.fileController.moveToAnotherFolder);
+        this._router.put('/:user_id/file/:file_id', this.fileController.rename);
+        this._router.delete('/:user_id/file/:file_id', this.fileController.delete);
+        this._router.post('/:user_id/file/:file_id', this.fileController.share);
     }
 
     public get router(){
