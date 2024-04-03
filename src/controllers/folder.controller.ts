@@ -3,6 +3,8 @@ import FolderModel from "../models/folder.model";
 import FileModel from "../models/file.model";
 import sequelize from "../database/dbConnection";
 import FolderSharedModel from "../models/folderShared.model";
+import Sequelize from "sequelize";
+import { QueryTypes } from "sequelize";
 
 class FolderController {
     public create = async (req: Request, res: Response): Promise<Response> => {
@@ -246,6 +248,55 @@ class FolderController {
                     errors: errors,
                     success: false,
                     data: null,
+                });
+            }
+            if (folderId === "root") {
+                const createdFolders = await FolderModel.findAll({
+                    where: {
+                        parent_id: null,
+                        user_id: userId,
+                        status: true,
+                    },
+                });
+                const sharedFoldersQuery = `
+                  SELECT f.*
+                  FROM folder f
+                  INNER JOIN folder_shared fs ON f.id = fs.folder_id
+                  WHERE fs.user_id = :userId AND f.status = TRUE AND fs.status = TRUE;
+                `;
+                const sharedFolders = await sequelize.query(
+                    sharedFoldersQuery,
+                    {
+                        replacements: { userId },
+                        type: Sequelize.QueryTypes.SELECT,
+                    }
+                );
+                const createdFiles = await FileModel.findAll({
+                    where: {
+                        user_id: userId,
+                        folder_id: null,
+                        status: true,
+                    },
+                });
+                const sharedFilesQuery = `
+                  SELECT f.*
+                  FROM file f
+                  INNER JOIN file_shared fs ON f.id = fs.file_id
+                  WHERE fs.user_id = :userId AND f.status = TRUE AND fs.status = TRUE;
+                `;
+                const sharedFiles = await sequelize.query(sharedFilesQuery, {
+                    replacements: { userId },
+                    type: Sequelize.QueryTypes.SELECT,
+                });
+                return res.status(200).send({
+                    errors: errors,
+                    success: true,
+                    data: {
+                        createdFolders: createdFolders,
+                        sharedFolders: sharedFolders,
+                        createdFiles: createdFiles,
+                        sharedFiles: sharedFiles,
+                    },
                 });
             }
             const folder = await FolderModel.findOne({
@@ -559,13 +610,15 @@ class FolderController {
         const regExpUUID = new RegExp(
             "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
         );
-        if (!folderId) {
-            errors.push("Missing id");
-        } else {
-            if (typeof folderId !== "string") {
-                errors.push("Invalid id");
-            } else if (!regExpUUID.test(folderId)) {
-                errors.push("Invalid id");
+        if (method !== "getFilesAndFolderFromAFolder") {
+            if (!folderId) {
+                errors.push("Missing id");
+            } else {
+                if (typeof folderId !== "string") {
+                    errors.push("Invalid id");
+                } else if (!regExpUUID.test(folderId)) {
+                    errors.push("Invalid id");
+                }
             }
         }
         if (!userId) {
@@ -617,6 +670,17 @@ class FolderController {
             case "delete":
                 break;
             case "getFilesAndFolderFromAFolder":
+                if (!folderId) {
+                    errors.push("Missing id");
+                } else {
+                    if (typeof folderId !== "string") {
+                        errors.push("Invalid id");
+                    } else if (folderId !== "root") {
+                        if (!regExpUUID.test(folderId)) {
+                            errors.push("Invalid id");
+                        }
+                    }
+                }
                 break;
             case "share":
                 break;
