@@ -10,6 +10,7 @@ CREATE TABLE file (
     mime_type VARCHAR(100) NOT NULL,
     size INT NOT NULL,
     folder_id UUID,
+    ip_location VARCHAR(50) NOT NULL,
     created_date TIMESTAMP NOT NULL,
     status BOOLEAN NOT NULL
 );
