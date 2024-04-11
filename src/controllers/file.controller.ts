@@ -15,6 +15,7 @@ class FileController {
                 mime_type,
                 size,
                 folder_id,
+                ip_location,
                 created_date,
                 status,
             } = req.body;
@@ -26,6 +27,7 @@ class FileController {
                 mime_type,
                 size,
                 folder_id,
+                ip_location,
                 created_date,
                 status,
                 userId,
@@ -63,6 +65,7 @@ class FileController {
                 mime_type: mime_type,
                 size: size,
                 folder_id: folder_id,
+                ip_location: ip_location,
                 created_date: created_date,
                 status: status,
             });
@@ -95,6 +98,7 @@ class FileController {
             const fildeId = req.params.file_id;
             errors = this.validateFileData(
                 fildeId,
+                undefined,
                 undefined,
                 undefined,
                 undefined,
@@ -194,6 +198,7 @@ class FileController {
                 folderId,
                 undefined,
                 undefined,
+                undefined,
                 userId,
                 "moveToAnotherFolder"
             );
@@ -287,6 +292,7 @@ class FileController {
                 undefined,
                 undefined,
                 undefined,
+                undefined,
                 userId,
                 "rename"
             );
@@ -351,6 +357,7 @@ class FileController {
                 undefined,
                 undefined,
                 undefined,
+                undefined,
                 userId,
                 "delete"
             );
@@ -406,6 +413,7 @@ class FileController {
             const { users } = req.body;
             errors = this.validateFileData(
                 fileId,
+                undefined,
                 undefined,
                 undefined,
                 undefined,
@@ -518,6 +526,7 @@ class FileController {
         mimeType: any,
         size: any,
         folderId: any,
+        ipLocation: any,
         createdDate: any,
         status: any,
         userId: any,
@@ -573,6 +582,11 @@ class FileController {
                     } else if (!regExpUUID.test(folderId)) {
                         errors.push("Invalid folderId");
                     }
+                }
+                if (!ipLocation) {
+                    errors.push("Missing ipLocation");
+                } else if (typeof ipLocation !== "string") {
+                    errors.push("Invalid ipLocation");
                 }
                 if (!createdDate) {
                     errors.push("Missing createdDate");
