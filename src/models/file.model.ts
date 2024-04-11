@@ -9,6 +9,7 @@ interface FileAtributes {
     mime_type: string;
     size: number;
     folder_id: string | null;
+    ip_location: string;
     created_date: Date;
     status: boolean;
 }
@@ -21,6 +22,7 @@ class FileModel extends Model<FileAtributes> implements FileAtributes {
     mime_type!: string;
     size!: number;
     folder_id!: string | null;
+    ip_location!: string;
     created_date!: Date;
     status!: boolean;
 }
@@ -55,6 +57,10 @@ FileModel.init(
         folder_id: {
             type: DataTypes.UUID,
             allowNull: true,
+        },
+        ip_location: {
+            type: DataTypes.STRING,
+            allowNull: false,
         },
         created_date: {
             type: DataTypes.DATE,
