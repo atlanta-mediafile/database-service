@@ -10,7 +10,8 @@ class FolderController {
     public create = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const { id, name, parent_id, created_date, status } = req.body;
+            const { id, name, created_date, status } = req.body;
+            let { parent_id } = req.body;
             const userId = req.params.user_id;
             errors = this.validateFolderData(
                 id,
@@ -44,6 +45,16 @@ class FolderController {
                         data: null,
                     });
                 }
+            }
+            parent_id = parent_id === undefined ? null : parent_id;
+            const alreadyFolderNamed = await this.validateFolderName(name, parent_id, userId);
+            if (!alreadyFolderNamed) {
+                errors.push("A folder with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
             }
             const newFolder = await FolderModel.create({
                 id: id,
