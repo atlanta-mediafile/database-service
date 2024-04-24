@@ -661,6 +661,15 @@ class FileController {
         userId: string
     ): Promise<boolean> => {
         const alreadyFileNamed = await FileModel.findOne({
+            where: {
+                name: name,
+                folder_id: folderId,
+                user_id: userId,
+                status: true,
+            },
+        });
+        return alreadyFileNamed === null;
+    };
 }
 
 export default FileController;
