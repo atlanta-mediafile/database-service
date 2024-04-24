@@ -607,6 +607,8 @@ class FileController {
             case "moveToAnotherFolder":
                 if (!folderId) {
                     errors.push("Missing folderId");
+                } else if(folderId === "/"){
+                    break;
                 } else {
                     if (typeof folderId !== "string") {
                         errors.push("Invalid folderId");
