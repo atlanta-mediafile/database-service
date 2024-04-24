@@ -135,6 +135,19 @@ class FolderController {
                     data: folder,
                 });
             }
+            const alreadyFolderNamed = await this.validateFolderName(
+                name,
+                folder.parent_id,
+                userId
+            );
+            if (!alreadyFolderNamed) {
+                errors.push("A folder with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
             const update = await folder.update({ name: name });
             if (update) {
                 return res.status(200).send({
