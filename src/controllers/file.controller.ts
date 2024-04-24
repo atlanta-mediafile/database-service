@@ -182,10 +182,7 @@ class FileController {
         }
     };
 
-    public moveToAnotherFolder = async (
-        req: Request,
-        res: Response
-    ): Promise<Response> => {
+    public moveToAnotherFolder = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
             const userId = req.params.user_id;
@@ -221,10 +218,7 @@ class FileController {
                     data: null,
                 });
             }
-            if (
-                folderId === file.folder_id ||
-                (folderId === "/" && file.folder_id === null)
-            ) {
+            if (folderId === file.folder_id || (folderId === "/" && file.folder_id === null)) {
                 return res.status(200).send({
                     errors: ["File is already in the specified folder"],
                     success: true,
@@ -232,6 +226,15 @@ class FileController {
                 });
             }
             if (folderId === "/") {
+                const alreadyFileNamed = await this.validateFileName(file.name, null, userId);
+                if (!alreadyFileNamed) {
+                    errors.push("A file with the same name already exists in that location");
+                    return res.status(400).send({
+                        errors: errors,
+                        success: false,
+                        data: null,
+                    });
+                }
                 const update = await file.update({ folder_id: null });
                 if (update) {
                     return res.status(200).send({
@@ -252,6 +255,15 @@ class FileController {
             if (!folder) {
                 return res.status(404).send({
                     errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const alreadyFileNamed = await this.validateFileName(file.name, folder.id, userId);
+            if (!alreadyFileNamed) {
+                errors.push("A file with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
                     success: false,
                     data: null,
                 });
