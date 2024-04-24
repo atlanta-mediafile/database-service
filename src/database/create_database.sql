@@ -199,3 +199,31 @@ AFTER INSERT OR UPDATE OR DELETE
 ON file_shared
 FOR EACH ROW
 EXECUTE PROCEDURE fn_file_shared_audit_logs();
+
+CREATE OR REPLACE FUNCTION fn_folder_shared_audit_logs()
+RETURNS TRIGGER AS $$
+DECLARE
+    user_id_val UUID;
+BEGIN
+    IF (TG_OP = 'INSERT') THEN
+        SELECT user_id INTO user_id_val FROM folder WHERE id = NEW.folder_id AND status = true;
+        INSERT INTO audit_logs (table_name, operation, new_value, update_date, user_id)
+        VALUES ('folder_shared', 'insert', row_to_json(NEW), now(), user_id_val);
+    ELSIF (TG_OP = 'UPDATE') THEN
+        SELECT user_id INTO user_id_val FROM folder WHERE id = NEW.folder_id AND status = true;
+        INSERT INTO audit_logs (table_name, operation, previous_value, new_value, update_date, user_id)
+        VALUES ('folder_shared', 'update', row_to_json(OLD), row_to_json(NEW), now(), user_id_val);
+    ELSIF (TG_OP = 'DELETE') THEN
+        SELECT user_id INTO user_id_val FROM folder WHERE id = OLD.folder_id AND status = true;
+        INSERT INTO audit_logs (table_name, operation, previous_value, update_date, user_id)
+        VALUES ('folder_shared', 'delete', row_to_json(OLD), now(), user_id_val);
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER folder_shared_tg_audit
+AFTER INSERT OR UPDATE OR DELETE
+ON folder_shared
+FOR EACH ROW
+EXECUTE PROCEDURE fn_folder_shared_audit_logs();
