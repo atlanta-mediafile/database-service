@@ -38,6 +38,16 @@ CREATE TABLE folder_shared (
     status BOOLEAN NOT NULL
 );
 
+CREATE TABLE audit_logs(
+    id SERIAL PRIMARY KEY NOT NULL,
+    table_name VARCHAR(255),
+    operation VARCHAR(255),
+    previous_value TEXT,
+    new_value TEXT,
+    update_date TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    user_id UUID
+);
+
 CREATE OR REPLACE FUNCTION verify_new_folder_is_child_of_current_folder(current_id UUID, new_id UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
