@@ -145,3 +145,29 @@ BEGIN
     DROP TABLE deleted_ids;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION fn_audit_logs() RETURNS trigger AS
+$$
+BEGIN
+    IF(TG_OP = 'DELETE') THEN
+        INSERT INTO audit_logs("table_name", "operation", "previous_value", "new_value", "update_date", "user_id")
+        VALUES (TG_TABLE_NAME, 'DELETE', row_to_json(OLD), NULL, now(), OLD.user_id);
+        RETURN OLD;
+    ELSEIF(TG_OP = 'UPDATE') THEN
+        INSERT INTO audit_logs("table_name", "operation", "previous_value", "new_value", "update_date", "user_id")
+        VALUES (TG_TABLE_NAME, 'UPDATE', row_to_json(OLD), row_to_json(NEW), now(), NEW.user_id);
+        RETURN NEW;
+    ELSEIF(TG_OP = 'INSERT') THEN
+        INSERT INTO audit_logs("table_name", "operation", "previous_value", "new_value", "update_date", "user_id")
+        VALUES (TG_TABLE_NAME, 'INSERT', NULL, row_to_json(NEW), now(), NEW.user_id);
+        RETURN NEW;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER file_tg_audit AFTER INSERT OR UPDATE OR DELETE ON file 
+FOR EACH ROW EXECUTE PROCEDURE fn_audit_logs();
+
+CREATE TRIGGER folder_tg_audit AFTER INSERT OR UPDATE OR DELETE ON folder 
+FOR EACH ROW EXECUTE PROCEDURE fn_audit_logs();
