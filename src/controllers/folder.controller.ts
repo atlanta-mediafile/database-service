@@ -10,7 +10,8 @@ class FolderController {
     public create = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const { id, name, parent_id, created_date, status } = req.body;
+            const { id, name, created_date, status } = req.body;
+            let { parent_id } = req.body;
             const userId = req.params.user_id;
             errors = this.validateFolderData(
                 id,
@@ -44,6 +45,16 @@ class FolderController {
                         data: null,
                     });
                 }
+            }
+            parent_id = parent_id === undefined ? null : parent_id;
+            const alreadyFolderNamed = await this.validateFolderName(name, parent_id, userId);
+            if (!alreadyFolderNamed) {
+                errors.push("A folder with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
             }
             const newFolder = await FolderModel.create({
                 id: id,
@@ -81,15 +92,7 @@ class FolderController {
             const { name } = req.body;
             const userId = req.params.user_id;
             const folderId = req.params.folder_id;
-            errors = this.validateFolderData(
-                folderId,
-                name,
-                null,
-                null,
-                null,
-                userId,
-                "rename"
-            );
+            errors = this.validateFolderData(folderId, name, null, null, null, userId, "rename");
             if (errors.length > 0) {
                 return res.status(400).send({
                     errors: errors,
@@ -124,6 +127,19 @@ class FolderController {
                     data: folder,
                 });
             }
+            const alreadyFolderNamed = await this.validateFolderName(
+                name,
+                folder.parent_id,
+                userId
+            );
+            if (!alreadyFolderNamed) {
+                errors.push("A folder with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
             const update = await folder.update({ name: name });
             if (update) {
                 return res.status(200).send({
@@ -152,15 +168,7 @@ class FolderController {
             let errors = [];
             const userId = req.params.user_id;
             const folderId = req.params.folder_id;
-            errors = this.validateFolderData(
-                folderId,
-                null,
-                null,
-                null,
-                null,
-                userId,
-                "delete"
-            );
+            errors = this.validateFolderData(folderId, null, null, null, null, userId, "delete");
             if (errors.length > 0) {
                 return res.status(400).send({
                     errors: errors,
@@ -198,16 +206,10 @@ class FolderController {
                 });
             }
             const deletedFilesAndFoldersIds: any[] = [];
-            for (
-                let index = 0;
-                index < deletedFilesAndFolders[0].length;
-                index++
-            ) {
+            for (let index = 0; index < deletedFilesAndFolders[0].length; index++) {
                 const row: any = deletedFilesAndFolders[0][index];
                 console.log(row.delete_files_and_folders_from_a_folder);
-                deletedFilesAndFoldersIds.push(
-                    row.delete_files_and_folders_from_a_folder
-                );
+                deletedFilesAndFoldersIds.push(row.delete_files_and_folders_from_a_folder);
             }
             return res.status(200).send({
                 errors: [],
@@ -264,13 +266,10 @@ class FolderController {
                   INNER JOIN folder_shared fs ON f.id = fs.folder_id
                   WHERE fs.user_id = :userId AND f.status = TRUE AND fs.status = TRUE;
                 `;
-                const sharedFolders = await sequelize.query(
-                    sharedFoldersQuery,
-                    {
-                        replacements: { userId },
-                        type: Sequelize.QueryTypes.SELECT,
-                    }
-                );
+                const sharedFolders = await sequelize.query(sharedFoldersQuery, {
+                    replacements: { userId },
+                    type: Sequelize.QueryTypes.SELECT,
+                });
                 const createdFiles = await FileModel.findAll({
                     where: {
                         user_id: userId,
@@ -376,10 +375,7 @@ class FolderController {
         }
     };
 
-    public moveToAnotherFolder = async (
-        req: Request,
-        res: Response
-    ): Promise<Response> => {
+    public moveToAnotherFolder = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
             const userId = req.params.user_id;
@@ -422,6 +418,19 @@ class FolderController {
                 });
             }
             if (newFolderId === "/") {
+                const alreadyFolderNamed = await this.validateFolderName(
+                    currentFolder.name,
+                    null,
+                    userId
+                );
+                if (!alreadyFolderNamed) {
+                    errors.push("A folder with the same name already exists in that location");
+                    return res.status(400).send({
+                        errors: errors,
+                        success: false,
+                        data: null,
+                    });
+                }
                 const update = await currentFolder.update({ parent_id: null });
                 if (update) {
                     return res.status(200).send({
@@ -462,6 +471,19 @@ class FolderController {
                     data: null,
                 });
             }
+            const alreadyFolderNamed = await this.validateFolderName(
+                currentFolder.name,
+                newFolderId,
+                userId
+            );
+            if (!alreadyFolderNamed) {
+                errors.push("A folder with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
             const update = await currentFolder.update({
                 parent_id: newFolderId,
             });
@@ -493,15 +515,7 @@ class FolderController {
             const userId = req.params.user_id;
             const folderId = req.params.folder_id;
             const { users } = req.body;
-            errors = this.validateFolderData(
-                folderId,
-                null,
-                null,
-                null,
-                null,
-                userId,
-                "share"
-            );
+            errors = this.validateFolderData(folderId, null, null, null, null, userId, "share");
             if (!Array.isArray(users)) {
                 errors.push("Invalid user ids");
             }
@@ -687,6 +701,8 @@ class FolderController {
             case "moveToAnotherFolder":
                 if (!parentId) {
                     errors.push("Missing new folder id");
+                } else if (parentId === "/") {
+                    break;
                 } else {
                     if (typeof parentId !== "string") {
                         errors.push("Invalid new folder id");
@@ -697,6 +713,22 @@ class FolderController {
                 break;
         }
         return errors;
+    };
+
+    private validateFolderName = async (
+        name: string,
+        folderId: any,
+        userId: string
+    ): Promise<boolean> => {
+        const alreadyFolderNamed = await FolderModel.findOne({
+            where: {
+                name: name,
+                parent_id: folderId,
+                user_id: userId,
+                status: true,
+            },
+        });
+        return alreadyFolderNamed === null;
     };
 }
 
