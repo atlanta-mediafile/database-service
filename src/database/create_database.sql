@@ -171,3 +171,31 @@ FOR EACH ROW EXECUTE PROCEDURE fn_audit_logs();
 
 CREATE TRIGGER folder_tg_audit AFTER INSERT OR UPDATE OR DELETE ON folder 
 FOR EACH ROW EXECUTE PROCEDURE fn_audit_logs();
+
+CREATE OR REPLACE FUNCTION fn_file_shared_audit_logs()
+RETURNS TRIGGER AS $$
+DECLARE
+    user_id_val UUID;
+BEGIN
+    IF (TG_OP = 'INSERT') THEN
+        SELECT user_id INTO user_id_val FROM file WHERE id = NEW.file_id AND status = true;
+        INSERT INTO audit_logs (table_name, operation, new_value, update_date, user_id)
+        VALUES ('file_shared', 'insert', row_to_json(NEW), now(), user_id_val);
+    ELSIF (TG_OP = 'UPDATE') THEN
+        SELECT user_id INTO user_id_val FROM file WHERE id = NEW.file_id AND status = true;
+        INSERT INTO audit_logs (table_name, operation, previous_value, new_value, update_date, user_id)
+        VALUES ('file_shared', 'update', row_to_json(OLD), row_to_json(NEW), now(), user_id_val);
+    ELSIF (TG_OP = 'DELETE') THEN
+        SELECT user_id INTO user_id_val FROM file WHERE id = OLD.file_id AND status = true;
+        INSERT INTO audit_logs (table_name, operation, previous_value, update_date, user_id)
+        VALUES ('file_shared', 'delete', row_to_json(OLD), now(), user_id_val);
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER file_shared_tg_audit
+AFTER INSERT OR UPDATE OR DELETE
+ON file_shared
+FOR EACH ROW
+EXECUTE PROCEDURE fn_file_shared_audit_logs();
