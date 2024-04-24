@@ -92,15 +92,7 @@ class FolderController {
             const { name } = req.body;
             const userId = req.params.user_id;
             const folderId = req.params.folder_id;
-            errors = this.validateFolderData(
-                folderId,
-                name,
-                null,
-                null,
-                null,
-                userId,
-                "rename"
-            );
+            errors = this.validateFolderData(folderId, name, null, null, null, userId, "rename");
             if (errors.length > 0) {
                 return res.status(400).send({
                     errors: errors,
@@ -176,15 +168,7 @@ class FolderController {
             let errors = [];
             const userId = req.params.user_id;
             const folderId = req.params.folder_id;
-            errors = this.validateFolderData(
-                folderId,
-                null,
-                null,
-                null,
-                null,
-                userId,
-                "delete"
-            );
+            errors = this.validateFolderData(folderId, null, null, null, null, userId, "delete");
             if (errors.length > 0) {
                 return res.status(400).send({
                     errors: errors,
@@ -222,16 +206,10 @@ class FolderController {
                 });
             }
             const deletedFilesAndFoldersIds: any[] = [];
-            for (
-                let index = 0;
-                index < deletedFilesAndFolders[0].length;
-                index++
-            ) {
+            for (let index = 0; index < deletedFilesAndFolders[0].length; index++) {
                 const row: any = deletedFilesAndFolders[0][index];
                 console.log(row.delete_files_and_folders_from_a_folder);
-                deletedFilesAndFoldersIds.push(
-                    row.delete_files_and_folders_from_a_folder
-                );
+                deletedFilesAndFoldersIds.push(row.delete_files_and_folders_from_a_folder);
             }
             return res.status(200).send({
                 errors: [],
@@ -288,13 +266,10 @@ class FolderController {
                   INNER JOIN folder_shared fs ON f.id = fs.folder_id
                   WHERE fs.user_id = :userId AND f.status = TRUE AND fs.status = TRUE;
                 `;
-                const sharedFolders = await sequelize.query(
-                    sharedFoldersQuery,
-                    {
-                        replacements: { userId },
-                        type: Sequelize.QueryTypes.SELECT,
-                    }
-                );
+                const sharedFolders = await sequelize.query(sharedFoldersQuery, {
+                    replacements: { userId },
+                    type: Sequelize.QueryTypes.SELECT,
+                });
                 const createdFiles = await FileModel.findAll({
                     where: {
                         user_id: userId,
@@ -400,10 +375,7 @@ class FolderController {
         }
     };
 
-    public moveToAnotherFolder = async (
-        req: Request,
-        res: Response
-    ): Promise<Response> => {
+    public moveToAnotherFolder = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
             const userId = req.params.user_id;
@@ -517,15 +489,7 @@ class FolderController {
             const userId = req.params.user_id;
             const folderId = req.params.folder_id;
             const { users } = req.body;
-            errors = this.validateFolderData(
-                folderId,
-                null,
-                null,
-                null,
-                null,
-                userId,
-                "share"
-            );
+            errors = this.validateFolderData(folderId, null, null, null, null, userId, "share");
             if (!Array.isArray(users)) {
                 errors.push("Invalid user ids");
             }
