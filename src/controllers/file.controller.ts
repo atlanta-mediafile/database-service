@@ -334,6 +334,15 @@ class FileController {
                     data: file,
                 });
             }
+            const alreadyFileNamed = await this.validateFileName(name, file.folder_id, userId);
+            if (!alreadyFileNamed) {
+                errors.push("A file with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
+            }
             const update = await file.update({ name: name });
             if (update) {
                 return res.status(200).send({
