@@ -687,6 +687,8 @@ class FolderController {
             case "moveToAnotherFolder":
                 if (!parentId) {
                     errors.push("Missing new folder id");
+                } else if (parentId === "/"){
+                    break;
                 } else {
                     if (typeof parentId !== "string") {
                         errors.push("Invalid new folder id");
