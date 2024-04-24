@@ -607,7 +607,7 @@ class FileController {
             case "moveToAnotherFolder":
                 if (!folderId) {
                     errors.push("Missing folderId");
-                } else if(folderId === "/"){
+                } else if (folderId === "/") {
                     break;
                 } else {
                     if (typeof folderId !== "string") {
@@ -631,6 +631,13 @@ class FileController {
         }
         return errors;
     };
+
+    private validateFileName = async (
+        name: string,
+        folderId: any,
+        userId: string
+    ): Promise<boolean> => {
+        const alreadyFileNamed = await FileModel.findOne({
 }
 
 export default FileController;
