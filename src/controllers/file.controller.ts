@@ -8,17 +8,9 @@ class FileController {
     public create = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const {
-                id,
-                name,
-                extension,
-                mime_type,
-                size,
-                folder_id,
-                ip_location,
-                created_date,
-                status,
-            } = req.body;
+            const { id, name, extension, mime_type, size, ip_location, created_date, status } =
+                req.body;
+            let { folder_id } = req.body;
             const userId = req.params.user_id;
             errors = this.validateFileData(
                 id,
@@ -56,6 +48,16 @@ class FileController {
                         data: null,
                     });
                 }
+            }
+            folder_id = folder_id === undefined ? null : folder_id;
+            const alreadyFileNamed = await this.validateFileName(name, folder_id, userId);
+            if (!alreadyFileNamed) {
+                errors.push("A file with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
             }
             const newFolder = await FileModel.create({
                 id: id,
@@ -180,10 +182,7 @@ class FileController {
         }
     };
 
-    public moveToAnotherFolder = async (
-        req: Request,
-        res: Response
-    ): Promise<Response> => {
+    public moveToAnotherFolder = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
             const userId = req.params.user_id;
@@ -219,10 +218,7 @@ class FileController {
                     data: null,
                 });
             }
-            if (
-                folderId === file.folder_id ||
-                (folderId === "/" && file.folder_id === null)
-            ) {
+            if (folderId === file.folder_id || (folderId === "/" && file.folder_id === null)) {
                 return res.status(200).send({
                     errors: ["File is already in the specified folder"],
                     success: true,
@@ -230,6 +226,15 @@ class FileController {
                 });
             }
             if (folderId === "/") {
+                const alreadyFileNamed = await this.validateFileName(file.name, null, userId);
+                if (!alreadyFileNamed) {
+                    errors.push("A file with the same name already exists in that location");
+                    return res.status(400).send({
+                        errors: errors,
+                        success: false,
+                        data: null,
+                    });
+                }
                 const update = await file.update({ folder_id: null });
                 if (update) {
                     return res.status(200).send({
@@ -250,6 +255,15 @@ class FileController {
             if (!folder) {
                 return res.status(404).send({
                     errors: ["Folder not found"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const alreadyFileNamed = await this.validateFileName(file.name, folder.id, userId);
+            if (!alreadyFileNamed) {
+                errors.push("A file with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
                     success: false,
                     data: null,
                 });
@@ -318,6 +332,15 @@ class FileController {
                     errors: ["File already has that name"],
                     success: false,
                     data: file,
+                });
+            }
+            const alreadyFileNamed = await this.validateFileName(name, file.folder_id, userId);
+            if (!alreadyFileNamed) {
+                errors.push("A file with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
                 });
             }
             const update = await file.update({ name: name });
@@ -607,6 +630,8 @@ class FileController {
             case "moveToAnotherFolder":
                 if (!folderId) {
                     errors.push("Missing folderId");
+                } else if (folderId === "/") {
+                    break;
                 } else {
                     if (typeof folderId !== "string") {
                         errors.push("Invalid folderId");
@@ -628,6 +653,22 @@ class FileController {
                 break;
         }
         return errors;
+    };
+
+    private validateFileName = async (
+        name: string,
+        folderId: any,
+        userId: string
+    ): Promise<boolean> => {
+        const alreadyFileNamed = await FileModel.findOne({
+            where: {
+                name: name,
+                folder_id: folderId,
+                user_id: userId,
+                status: true,
+            },
+        });
+        return alreadyFileNamed === null;
     };
 }
 
