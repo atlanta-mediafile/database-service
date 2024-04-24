@@ -8,17 +8,9 @@ class FileController {
     public create = async (req: Request, res: Response): Promise<Response> => {
         try {
             let errors = [];
-            const {
-                id,
-                name,
-                extension,
-                mime_type,
-                size,
-                folder_id,
-                ip_location,
-                created_date,
-                status,
-            } = req.body;
+            const { id, name, extension, mime_type, size, ip_location, created_date, status } =
+                req.body;
+            let { folder_id } = req.body;
             const userId = req.params.user_id;
             errors = this.validateFileData(
                 id,
@@ -56,6 +48,16 @@ class FileController {
                         data: null,
                     });
                 }
+            }
+            folder_id = folder_id === undefined ? null : folder_id;
+            const alreadyFileNamed = await this.validateFileName(name, folder_id, userId);
+            if (!alreadyFileNamed) {
+                errors.push("A file with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
+                    success: false,
+                    data: null,
+                });
             }
             const newFolder = await FileModel.create({
                 id: id,
