@@ -687,7 +687,7 @@ class FolderController {
             case "moveToAnotherFolder":
                 if (!parentId) {
                     errors.push("Missing new folder id");
-                } else if (parentId === "/"){
+                } else if (parentId === "/") {
                     break;
                 } else {
                     if (typeof parentId !== "string") {
@@ -699,6 +699,22 @@ class FolderController {
                 break;
         }
         return errors;
+    };
+
+    private validateFolderName = async (
+        name: string,
+        folderId: any,
+        userId: string
+    ): Promise<boolean> => {
+        const alreadyFolderNamed = await FolderModel.findOne({
+            where: {
+                name: name,
+                parent_id: folderId,
+                user_id: userId,
+                status: true,
+            },
+        });
+        return alreadyFolderNamed === null;
     };
 }
 
