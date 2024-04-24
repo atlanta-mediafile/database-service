@@ -418,6 +418,19 @@ class FolderController {
                 });
             }
             if (newFolderId === "/") {
+                const alreadyFolderNamed = await this.validateFolderName(
+                    currentFolder.name,
+                    null,
+                    userId
+                );
+                if (!alreadyFolderNamed) {
+                    errors.push("A folder with the same name already exists in that location");
+                    return res.status(400).send({
+                        errors: errors,
+                        success: false,
+                        data: null,
+                    });
+                }
                 const update = await currentFolder.update({ parent_id: null });
                 if (update) {
                     return res.status(200).send({
@@ -454,6 +467,19 @@ class FolderController {
             if (isChild[0][0].is_child) {
                 return res.status(400).send({
                     errors: ["Cannot move a folder into one of its subfolders"],
+                    success: false,
+                    data: null,
+                });
+            }
+            const alreadyFolderNamed = await this.validateFolderName(
+                currentFolder.name,
+                newFolderId,
+                userId
+            );
+            if (!alreadyFolderNamed) {
+                errors.push("A folder with the same name already exists in that location");
+                return res.status(400).send({
+                    errors: errors,
                     success: false,
                     data: null,
                 });
